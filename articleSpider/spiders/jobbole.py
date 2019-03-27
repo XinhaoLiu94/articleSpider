@@ -3,6 +3,8 @@ import scrapy
 import re
 from scrapy.http import Request
 from articleSpider.items import ArticleItem
+from articleSpider.utils.common import get_md5
+import datetime
 
 
 
@@ -46,7 +48,12 @@ class JobboleSpider(scrapy.Spider):
         taglist = response.xpath('//*[@class="entry-meta-hide-on-mobile"]/a/text()').extract()
 
         article_item["title"] = title
+        article_item["url_object_id"] = get_md5(response.url)
         article_item["url"] = response.url
+        try:
+            create_date = datetime.datetime.strptime(create_date,"%Y/%m/%d").date()
+        except Exception as e:
+            create_date = datetime.datetime.now().date()
         article_item["create_date"] = create_date
         article_item["praise_nums"] = praise_numbers
         article_item["comment_nums"] = comment_numbers
@@ -55,4 +62,3 @@ class JobboleSpider(scrapy.Spider):
         article_item["content"] = content
 
         yield article_item
-        pass
