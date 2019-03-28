@@ -12,7 +12,7 @@ class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
     start_urls = ['http://blog.jobbole.com/all-posts/']
-    #######
+
 
     def parse(self, response):
         #获取列表页的
@@ -30,7 +30,11 @@ class JobboleSpider(scrapy.Spider):
         article_item = ArticleItem()
         title = response.xpath('//*[@class="entry-header"]/h1/text()').extract()
         create_date = response.xpath('//*[@class="entry-meta"]/p/text()').extract()[0].strip().replace("·"," ").strip()
-        praise_numbers = int(response.xpath('//*[@class=" btn-bluet-bigger href-style vote-post-up   register-user-only "]/h10/text()').extract()[0])
+        praise_numbers = response.xpath('//*[@class=" btn-bluet-bigger href-style vote-post-up   register-user-only "]/h10/text()').extract()
+        if praise_numbers == []:
+            praise_numbers = 0
+        else:
+            praise_numbers = int(praise_numbers[0])
         favor_numbers = response.xpath('//*[@class=" btn-bluet-bigger href-style bookmark-btn  register-user-only "]/text()').extract()[0]
         match_re = re.match(".*(\d+).*",favor_numbers)
         if match_re:
@@ -59,7 +63,7 @@ class JobboleSpider(scrapy.Spider):
         article_item["praise_nums"] = praise_numbers
         article_item["comment_nums"] = comment_numbers
         article_item["favour_nums"] = favor_numbers
-        article_item["tags"] = taglist
+        article_item["tags"] = ",".join(taglist) #将taglist转化为字符串
         article_item["content"] = content
 
         yield article_item

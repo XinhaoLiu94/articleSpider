@@ -67,7 +67,7 @@ ROBOTSTXT_OBEY = False
 ITEM_PIPELINES = {
     #'articleSpider.pipelines.ArticlespiderPipeline': 300,
     #'articleSpider.pipelines.JsonExporterPipeline' : 1
-    'articleSpider.pipelines.MysqlPipeline' : 1
+    'articleSpider.pipelines.MysqlTwistedPipeline' : 1
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -90,3 +90,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+MYSQL_HOST = "192.168.198.129"
+MYSQL_DBNAME = "articleSpider"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "Liuxh520"

@@ -8,8 +8,10 @@
 import codecs
 import json
 import MySQLdb
+import MySQLdb.cursors
 
 from scrapy.exporters import JsonItemExporter
+from twisted.enterprise import adbapi
 
 class ArticlespiderPipeline(object):
     def process_item(self, item, spider):
@@ -27,6 +29,47 @@ class MysqlPipeline(object):
         """
         self.cursor.execute(insert_sql,(item["title"], item["url"],item["create_date"],item["favour_nums"], item["url_object_id"], item["comment_nums"], item["praise_nums"],item["tags"]))
         self.conn.commit()
+
+
+class MysqlTwistedPipeline(object):
+    def __init__(self,dbpool):
+        self.dbpool = dbpool
+
+    @classmethod
+    def from_settings(cls,settings):
+        dbparm = dict(
+            host=settings["MYSQL_HOST"],
+            db = settings["MYSQL_DBNAME"],
+            user = settings["MYSQL_USER"],
+            passwd = settings["MYSQL_PASSWORD"],
+            charset = 'utf8mb4',
+            cursorclass = MySQLdb.cursors.DictCursor,
+            use_unicode = True
+        )
+
+
+        dbpool = adbapi.ConnectionPool("MySQLdb",**dbparm)
+
+        return cls(dbpool)
+
+    def process_item(self, item, spider):
+        #使用twisted将mysql插入变成异步执行
+        query = self.dbpool.runInteraction(self.do_insert,item)
+        query.addErrback(self.handle_error,item,spider)
+
+    def handle_error(self,failure,item,spider):
+        #处理异步异常
+        print(failure)
+
+    def do_insert(self, cursor, item):
+        insert_sql = """
+                    insert into article(title, url_object_id,url, create_date,comment_nums,praise_nums,fav_nums,content,tags)
+                    VALUES (%s, %s,%s,%s,%s,%s,%s,%s,%s)
+                """
+        cursor.execute(insert_sql, (
+        item["title"], item["url_object_id"],item["url"], item["create_date"],item["comment_nums"],item["praise_nums"],item["favour_nums"],item["content"],item["tags"]))
+
+
 
 
 class JsonWithEncodingPipeline(object):
